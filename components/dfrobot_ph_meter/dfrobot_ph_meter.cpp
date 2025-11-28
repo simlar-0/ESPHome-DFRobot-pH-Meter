@@ -273,10 +273,7 @@ void DFRobotPHMeter::loop() {
     }
     
     voltage_samples[i] = voltage;
-    if (samples_to_take > 1 && i < samples_to_take - 1) {
-      delay(2); // Small delay between samples
-    }
-  }
+ }
 
   // Calculate median voltage from samples
   float voltage = (samples_to_take > 1) ? calculate_median_(voltage_samples, samples_to_take) : voltage_samples[0];
