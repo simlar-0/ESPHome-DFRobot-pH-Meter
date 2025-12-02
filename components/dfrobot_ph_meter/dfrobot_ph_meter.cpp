@@ -331,9 +331,8 @@ void DFRobotPHMeter::loop() {
       if (adc_gpio_ < 0)
         return;
 
-      static adc_oneshot_unit_handle_t adc_handle = nullptr;
       int raw = 0;
-      adc_channel_t adc_channel = adc_channel_from_gpio(adc_gpio_);
+      static adc_channel_t adc_channel = adc_channel_from_gpio(adc_gpio_);
       if (adc_handle) {
         adc_oneshot_read(adc_handle, adc_channel, &raw);
         voltage = (raw / 4095.0f) * 3300.0f;
