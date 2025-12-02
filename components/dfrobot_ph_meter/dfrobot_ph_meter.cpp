@@ -16,6 +16,53 @@ static const char *const TAG = "DFRobotPHMeter";
 static constexpr float NERNST_REFERENCE_TEMP = 25.0f;
 static constexpr float KELVIN_OFFSET = 273.15f;
 
+static adc_channel_t adc_channel_from_gpio(int gpio) {
+  switch (gpio) {
+  case 1:
+    return ADC_CHANNEL_0;
+  case 2:
+    return ADC_CHANNEL_1;
+  case 3:
+    return ADC_CHANNEL_2;
+  case 4:
+    return ADC_CHANNEL_3;
+  case 11:
+    return ADC_CHANNEL_0;
+  case 12:
+    return ADC_CHANNEL_1;
+  case 13:
+    return ADC_CHANNEL_2;
+  case 14:
+    return ADC_CHANNEL_3;
+
+  default:
+    return ADC_CHANNEL_0;
+  }
+}
+
+static adc_unit_t adc_unit_from_gpio(int gpio) {
+  switch (gpio) {
+  case 1:
+    return ADC_UNIT_1;
+  case 2:
+    return ADC_UNIT_1;
+  case 3:
+    return ADC_UNIT_1;
+  case 4:
+    return ADC_UNIT_1;
+  case 11:
+    return ADC_UNIT_2;
+  case 12:
+    return ADC_UNIT_2;
+  case 13:
+    return ADC_UNIT_2;
+  case 14:
+    return ADC_UNIT_2;
+  default:
+    return ADC_UNIT_2;
+  }
+}
+
 void DFRobotPHMeter::setup() {
   // Initialize preferences and load stored calibration voltages
   acid_voltage_pref_ =
@@ -42,16 +89,17 @@ void DFRobotPHMeter::setup() {
     alkaline_voltage_ = alkaline_voltage_default_;
 
   // ADC configuration for native ADC mode
+  adc_unit_t adc_unit = adc_unit_from_gpio(adc_gpio_);
+  adc_channel_t adc_channel = adc_channel_from_gpio(adc_gpio_);
   if (input_mode_ == MODE_NATIVE_ADC && adc_gpio_ >= 0) {
     if (!adc_initialized) {
       adc_oneshot_unit_init_cfg_t init_cfg = {
-          .unit_id = ADC_UNIT_1,
+          .unit_id = adc_unit,
       };
       adc_oneshot_new_unit(&init_cfg, &adc_handle);
       chan_cfg.bitwidth = ADC_BITWIDTH_12;
       chan_cfg.atten = ADC_ATTEN_DB_12;
-      adc_oneshot_config_channel(
-          adc_handle, static_cast<adc_channel_t>(adc_gpio_ - 32), &chan_cfg);
+      adc_oneshot_config_channel(adc_handle, adc_channel, &chan_cfg);
       adc_initialized = true;
     }
   }
@@ -283,12 +331,11 @@ void DFRobotPHMeter::loop() {
       if (adc_gpio_ < 0)
         return;
 
-      // ESP-IDF: use ADC oneshot API for GPIOs 32-39
       static adc_oneshot_unit_handle_t adc_handle = nullptr;
       int raw = 0;
-      if (adc_handle && adc_gpio_ >= 32 && adc_gpio_ <= 39) {
-        adc_oneshot_read(adc_handle, static_cast<adc_channel_t>(adc_gpio_ - 32),
-                         &raw);
+      adc_channel_t adc_channel = adc_channel_from_gpio(adc_gpio_);
+      if (adc_handle) {
+        adc_oneshot_read(adc_handle, adc_channel, &raw);
         voltage = (raw / 4095.0f) * 3300.0f;
       } else {
         voltage = 0.0f;

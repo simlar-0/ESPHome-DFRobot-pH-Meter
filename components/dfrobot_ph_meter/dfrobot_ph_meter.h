@@ -1,16 +1,16 @@
 #pragma once
 
+#include "esphome/components/sensor/sensor.h"
+#include "esphome/components/switch/switch.h"
+#include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/core/component.h"
 #include "esphome/core/preferences.h"
-#include "esphome/components/sensor/sensor.h"
-#include "esphome/components/text_sensor/text_sensor.h"
-#include "esphome/components/switch/switch.h"
 
 namespace esphome {
 namespace dfrobot_ph_meter {
 
 class DigitalSwitch : public switch_::Switch {
- public:
+public:
   void write_state(bool state) override {
     this->publish_state(state);
     this->pin_state_ = state;
@@ -19,7 +19,7 @@ class DigitalSwitch : public switch_::Switch {
 };
 
 class DFRobotPHMeter : public Component {
- public:
+public:
   void setup() override;
   void loop() override;
 
@@ -48,24 +48,35 @@ class DFRobotPHMeter : public Component {
   }
 
   void set_ph_sensor(sensor::Sensor *s) { ph_sensor_ = s; }
-  void set_temperature_output_sensor(sensor::Sensor *s) { temperature_output_sensor_ = s; }
-  void set_calibration_mode_switch(DigitalSwitch *sw) { calibration_mode_switch_ = sw; }
+  void set_temperature_output_sensor(sensor::Sensor *s) {
+    temperature_output_sensor_ = s;
+  }
+  void set_calibration_mode_switch(DigitalSwitch *sw) {
+    calibration_mode_switch_ = sw;
+  }
   void set_temperature_sensor(sensor::Sensor *s) { temperature_sensor_ = s; }
-  void set_status_sensor(text_sensor::TextSensor *s) { probe_status_sensor_ = s; }
+  void set_status_sensor(text_sensor::TextSensor *s) {
+    probe_status_sensor_ = s;
+  }
   void set_raw_voltage_sensor(sensor::Sensor *s) { raw_voltage_sensor_ = s; }
   void set_slope_sensor(sensor::Sensor *s) { current_slope_sensor_ = s; }
 
   void set_input_mode_ads1115() { input_mode_ = MODE_ADS1115; }
-  void set_input_mode_native_adc(int gpio) { input_mode_ = MODE_NATIVE_ADC; adc_gpio_ = gpio; }
+  void set_input_mode_native_adc(int gpio) {
+    input_mode_ = MODE_NATIVE_ADC;
+    adc_gpio_ = gpio;
+  }
 
   void reset_calibration();
   void set_calibration_stage(int stage);
   void evaluate_calibration_mode_();
 
- protected:
+protected:
   void update_probe_status_();
   void check_reset_status_();
-  bool save_calibration_voltage_(ESPPreferenceObject &pref, float &internal_value, float new_value, const char *label);
+  bool save_calibration_voltage_(ESPPreferenceObject &pref,
+                                 float &internal_value, float new_value,
+                                 const char *label);
   float calculate_median_(float *values, int count);
   float get_temperature_() const;
   float clamp_ph_(float ph) const;
@@ -131,15 +142,15 @@ class DFRobotPHMeter : public Component {
 };
 
 class CalibratePHAction : public esphome::Action<> {
- public:
+public:
   explicit CalibratePHAction(DFRobotPHMeter *parent) : parent_(parent) {}
   void set_stage(int stage) { stage_ = stage; }
   void play() override;
 
- protected:
+protected:
   DFRobotPHMeter *parent_;
   int stage_;
 };
 
-}  // namespace dfrobot_ph_meter
-}  // namespace esphome
+} // namespace dfrobot_ph_meter
+} // namespace esphome
